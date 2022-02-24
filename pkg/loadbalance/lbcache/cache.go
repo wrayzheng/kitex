@@ -131,6 +131,7 @@ func (b *BalancerFactory) watcher() {
 				// 2. wait next ticker for collect, maybe the balancer is used again
 				// (avoid being immediate delete the balancer which had been created recently)
 			} else {
+				klog.Info("KITEX: lbcache delete expire cache, key=%s", key)
 				b.cache.Delete(key)
 				bl.close()
 			}
@@ -243,6 +244,7 @@ func Dump() interface{} {
 							inst := dr.Instances[i]
 							addr := fmt.Sprintf("%s://%s", inst.Address().Network(), inst.Address().String())
 							insts = append(insts, instInfo{Address: addr, Weight: inst.Weight()})
+							klog.Info("KITEX: lbcache dump, key=%s, intance=%s", routeKey, addr)
 						}
 						routeMap[routeKey] = insts
 					} else {
@@ -253,10 +255,13 @@ func Dump() interface{} {
 				}
 				return true
 			})
+			klog.Warnf("KITEX: range balancerFactories, cacheKey=%s, routeMap=%v", cacheKey, routeMap)
 		} else {
 			cacheDump[cacheKey] = unknown
+			klog.Warnf("KITEX: range balancerFactories, no routeMap, cacheKey=%s", cacheKey)
 		}
 		return true
 	})
+	klog.Warnf("KITEX: lbcache dump, val=%s", cacheDump)
 	return cacheDump
 }
