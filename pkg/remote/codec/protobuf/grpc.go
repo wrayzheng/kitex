@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/binary"
 
+	"github.com/cloudwego/kitex/pkg/klog"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/cloudwego/kitex/pkg/remote"
@@ -106,6 +107,9 @@ func (c *grpcCodec) Decode(ctx context.Context, message remote.Message, in remot
 		return err
 	}
 	dLen := int(binary.BigEndian.Uint32(hdr[1:]))
+	if message.RPCInfo().To().Address().Network() == "tcp" && dLen > 1024*4 {
+		klog.Infof("KITEX: GRPC decode len=%d", dLen)
+	}
 	d, err := in.Next(dLen)
 	if err != nil {
 		return err
