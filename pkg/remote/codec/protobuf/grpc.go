@@ -115,6 +115,9 @@ func (c *grpcCodec) Decode(ctx context.Context, message remote.Message, in remot
 		return err
 	}
 	data := message.Data()
+	defer func() {
+		klog.Infof("KITEX: GRPC decode data=%v", data)
+	}()
 	switch t := data.(type) {
 	case protobufV2MsgCodec:
 		return t.XXX_Unmarshal(d)
