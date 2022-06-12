@@ -21,8 +21,10 @@ import (
 	"fmt"
 
 	"github.com/apache/thrift/lib/go/thrift"
+
 	"github.com/cloudwego/kitex/pkg/generic/descriptor"
 	"github.com/cloudwego/kitex/pkg/remote/codec/perrors"
+
 	jsoniter "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
 )
@@ -61,7 +63,7 @@ func (m *WriteJSON) SetBase64Binary(enable bool) {
 }
 
 // Write write json string to out thrift.TProtocol
-func (m *WriteJSON) Write(ctx context.Context, out thrift.TProtocol, msg interface{}, requestBase *Base) error {
+func (m *WriteJSON) Write(ctx context.Context, out thrift.TProtocol, msg interface{}, requestBase *Base, customWriters map[string]CustomWriter) error {
 	if !m.hasRequestBase {
 		requestBase = nil
 	}
