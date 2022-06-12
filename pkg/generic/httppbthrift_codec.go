@@ -10,8 +10,6 @@ import (
 	"strings"
 	"sync/atomic"
 
-	"github.com/jhump/protoreflect/desc"
-
 	"github.com/cloudwego/kitex/pkg/generic/descriptor"
 	"github.com/cloudwego/kitex/pkg/generic/proto"
 	"github.com/cloudwego/kitex/pkg/generic/thrift"
@@ -76,7 +74,7 @@ func (c *httpPbThriftCodec) Marshal(ctx context.Context, msg remote.Message, out
 	if !ok {
 		return fmt.Errorf("get parser ServiceDescriptor failed")
 	}
-	pbSvcDsc, ok := c.pbSvcDsc.Load().(*desc.ServiceDescriptor)
+	pbSvcDsc, ok := c.pbSvcDsc.Load().(proto.ServiceDescriptor)
 	if !ok {
 		return fmt.Errorf("get parser PbServiceDescriptor failed")
 	}

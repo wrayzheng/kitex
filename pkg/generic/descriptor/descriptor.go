@@ -52,6 +52,8 @@ type TypeDescriptor struct {
 	Elem          *TypeDescriptor   // for slice or map element
 	Struct        *StructDescriptor // for struct
 	IsRequestBase bool
+	IsCustomData  bool
+	CustomDataName string
 }
 
 // StructDescriptor idl struct descriptor
@@ -79,6 +81,7 @@ type FunctionDescriptor struct {
 	Request        *TypeDescriptor
 	Response       *TypeDescriptor
 	HasRequestBase bool
+	HasCustomData  bool
 }
 
 // ServiceDescriptor idl service descriptor

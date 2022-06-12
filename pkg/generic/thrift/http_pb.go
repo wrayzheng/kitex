@@ -22,8 +22,6 @@ import (
 	"fmt"
 
 	"github.com/apache/thrift/lib/go/thrift"
-	"github.com/jhump/protoreflect/desc"
-	"github.com/jhump/protoreflect/dynamic"
 
 	"github.com/cloudwego/kitex/pkg/generic/descriptor"
 	"github.com/cloudwego/kitex/pkg/generic/proto"
@@ -32,19 +30,19 @@ import (
 // WriteHTTPPbRequest implement of MessageWriter
 type WriteHTTPPbRequest struct {
 	svc   *descriptor.ServiceDescriptor
-	pbSvc *desc.ServiceDescriptor
+	pbSvc proto.ServiceDescriptor
 }
 
 var _ MessageWriter = (*WriteHTTPPbRequest)(nil)
 
 // NewWriteHTTPPbRequest ...
 // Base64 decoding for binary is enabled by default.
-func NewWriteHTTPPbRequest(svc *descriptor.ServiceDescriptor, pbSvc *desc.ServiceDescriptor) *WriteHTTPPbRequest {
+func NewWriteHTTPPbRequest(svc *descriptor.ServiceDescriptor, pbSvc proto.ServiceDescriptor) *WriteHTTPPbRequest {
 	return &WriteHTTPPbRequest{svc, pbSvc}
 }
 
 // Write ...
-func (w *WriteHTTPPbRequest) Write(ctx context.Context, out thrift.TProtocol, msg interface{}, requestBase *Base) error {
+func (w *WriteHTTPPbRequest) Write(ctx context.Context, out thrift.TProtocol, msg interface{}, requestBase *Base, customWriters map[string]CustomWriter) error {
 	req := msg.(*descriptor.HTTPRequest)
 	fn, err := w.svc.Router.Lookup(req)
 	if err != nil {
@@ -59,14 +57,14 @@ func (w *WriteHTTPPbRequest) Write(ctx context.Context, out thrift.TProtocol, ms
 	if mt == nil {
 		return fmt.Errorf("method not found in pb descriptor: %v", fn.Name)
 	}
-	pbMsg := dynamic.NewMessage(mt.GetInputType())
+	pbMsg := proto.NewMessage(mt.GetInputType())
 	err = pbMsg.Unmarshal(req.RawBody)
 	if err != nil {
 		return fmt.Errorf("unmarshal pb body error: %v", err)
 	}
 	req.Body = pbMsg
 
-	return wrapStructWriter(ctx, req, out, fn.Request, &writerOption{requestBase: requestBase})
+	return wrapStructWriter(ctx, req, out, fn.Request, &writerOption{requestBase: requestBase, customWriters: customWriters})
 }
 
 // ReadHTTPResponse implement of MessageReaderWithMethod

@@ -10,6 +10,7 @@ type MessageDescriptor = *desc.MessageDescriptor
 
 type Message interface{
 	Marshal() ([]byte, error)
+	Unmarshal([]byte) error
 	TryGetFieldByNumber(fieldNumber int) (interface{}, error)
 	TrySetFieldByNumber(fieldNumber int, val interface{}) error
 }
