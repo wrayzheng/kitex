@@ -270,3 +270,65 @@ func TestExtends(t *testing.T) {
 		test.Assert(t, dp.Functions[fn] != nil)
 	}
 }
+
+var httpCustomDataIDL = `
+namespace go http
+
+struct Location {
+	1: required string country
+	2: required string city
+}
+
+struct CommonParam {
+    1: optional i64 user_id
+    2: optional string user_name
+	3: optional Location location
+} (api.custom_data = 'CommonParam')
+
+struct NotCustomData {
+	1: optional CommonParam common_param
+}
+
+struct BizRequest1 {
+    1: optional i64 id(api.query = 'id')
+	2: optional CommonParam common_param
+}
+
+struct BizRequest2 {
+    1: optional i64 id(api.query = 'id')
+	2: optional NotCustomData not_custom_data
+}
+
+struct BizRequest3 {
+    1: optional i64 id(api.query = 'id')
+}
+
+struct BizResponse {
+    1: optional string msg                             (api.header='msg') 
+}
+
+service BizService {
+	BizResponse BizMethod1(1: BizRequest1 req) (api.get = '/path/1') 
+	BizResponse BizMethod2(1: BizRequest2 req) (api.get = '/path/2') 
+	BizResponse BizMethod3(1: BizRequest3 req) (api.get = '/path/3') 
+}`
+
+func TestParseHttpCustomDataIDL(t *testing.T) {
+	re, err := parser.ParseString("http_custom_data.thrift", httpCustomDataIDL)
+	test.Assert(t, err == nil, err)
+	svc, err := Parse(re, LastServiceOnly)
+	test.Assert(t, err == nil)
+	bizMethod1 := svc.Functions["BizMethod1"]
+	test.Assert(t, bizMethod1.HasCustomData)
+	test.Assert(t, bizMethod1.Request.Struct.FieldsByName["req"].Type.
+		Struct.FieldsByName["common_param"].Type.IsCustomData)
+
+	bizMethod2 := svc.Functions["BizMethod2"]
+	test.Assert(t, !bizMethod2.HasCustomData)
+	test.Assert(t, !bizMethod2.Request.Struct.FieldsByName["req"].Type.
+		Struct.FieldsByName["not_custom_data"].Type.
+		Struct.FieldsByName["common_param"].Type.IsCustomData)
+
+	bizMethod3 := svc.Functions["BizMethod3"]
+	test.Assert(t, !bizMethod3.HasCustomData)
+}
