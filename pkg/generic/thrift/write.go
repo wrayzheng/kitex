@@ -596,24 +596,20 @@ func writeStruct(ctx context.Context, val interface{}, out thrift.TProtocol, t *
 			continue
 		}
 		if field.Type.IsCustomData {
-			if field.Type.Name == "AgwCommonParam" {
-				elem = map[string]interface{}{} // 外层只需占位，避免required情况报错
-			} else {
-				w, ok := opt.customWriters[field.Type.CustomDataName]
-				if !ok {
-					return errors.New("no custom data writer: " + field.Type.CustomDataName)
-				}
-				if err := out.WriteFieldBegin(field.Name, field.Type.Type.ToThriftTType(), int16(field.ID)); err != nil {
-					return err
-				}
-				if err := w(ctx, out, field); err != nil {
-					return err
-				}
-				if err := out.WriteFieldEnd(); err != nil {
-					return err
-				}
-				continue
+			w, ok := opt.customWriters[field.Type.CustomDataName]
+			if !ok {
+				return errors.New("no custom data writer: " + field.Type.CustomDataName)
 			}
+			if err := out.WriteFieldBegin(field.Name, field.Type.Type.ToThriftTType(), int16(field.ID)); err != nil {
+				return err
+			}
+			if err := w(ctx, out, field); err != nil {
+				return err
+			}
+			if err := out.WriteFieldEnd(); err != nil {
+				return err
+			}
+			continue
 		}
 		if !ok || elem == nil {
 			if field.Required {

@@ -170,6 +170,7 @@ func addFunction(fn *parser.Function, tree *parser.Thrift, sDsc *descriptor.Serv
 				break
 			}
 		}
+		// custom data only appears in the first depth of request fields
 		for _, f := range reqType.Struct.FieldsByName {
 			if f.Type.IsCustomData {
 				hasCustomData = true
@@ -319,8 +320,6 @@ func parseType(t *parser.Type, tree *parser.Thrift, cache map[string]*descriptor
 			return nil, fmt.Errorf("missing type: %s", typeName)
 		}
 
-		// TODO refactor using api.custom_data annotation
-
 		ty := &descriptor.TypeDescriptor{
 			Name: t.Name,
 			Type: descriptor.STRUCT,
@@ -335,7 +334,20 @@ func parseType(t *parser.Type, tree *parser.Thrift, cache map[string]*descriptor
 			IsCustomData: (typeName == "AgwCommonParam" && recursionDepth == 1) || (typePkg == "agw_common_param" && recursionDepth == 2),
 			CustomDataName: typeName,
 		}
-		// cannot cache the request base and custom data
+		// struct annotated by api.custom_data and in the first depth of request struct is considered as custom data
+		if recursionDepth == 1 {
+			for _, ann := range st.Annotations {
+				if ann.GetKey() == "api.custom_data" {
+					ty.IsCustomData = true
+					if len(ann.GetValues()) == 0 {
+						return nil, fmt.Errorf("custom data name is missing in type: %s", typeName)
+					}
+					ty.CustomDataName = ann.GetValues()[0]
+					break
+				}
+			}
+		}
+		// cannot cache the request base
 		if !ty.IsRequestBase && !ty.IsCustomData {
 			cache[t.Name] = ty
 		}
